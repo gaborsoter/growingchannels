@@ -1,55 +1,143 @@
 # This file includes the algorithm for two-dimensional optimisation of the channels of a soft touchpad. 
-
 import cv2 
 import numpy as np
+import random
+import matplotlib
+import matplotlib.pyplot as plt
+import time
+
+np.random.seed(3)
 
 # Hyperparameters
 height = 50 # height of the touchpad
 width  = 50 # width of the touchpad
-maxt_iterations = 100000 # maximum number of iterations
-max_individuals = 100 # number of individuals
-
-# Fitness weights, min = 0, max = 1
-w_unique  = 0.25 # uniqueness
-w_cover   = 0.25 # coverage
-
-touch_kernel = [3, 3] # effect of touch
+max_iterations = 100000 # maximum number of iterations
+max_individuals = 200 # number of individuals, need to be even
 
 # Blueprint of individuals
-class Individual:
+class GeneticAlgorithm:
+	def __init__(self):
+		pass
+	
+	def probabilities(self):
+		fitsum  = 0
+
+		for i in range(population.shape[0]):
+			fitsum = fitsum + population[i].fitness
+
+		for i in range(population.shape[0]):
+			population[i].probability = population[i].fitness / fitsum		
+
+		return
+
+	
+	def rouletteWheel(self):
+		newpopulation = np.array([np.copy(population[i].genome) for i in range(population.shape[0])])
+		noi = 0
+
+		while noi < (population.shape[0]):
+			rp = np.random.rand() / population.shape[0] / 10
+
+			for i in range(population.shape[0]):
+				if noi < (population.shape[0]) and rp <= population[i].probability:
+					newpopulation[noi] = population[i].genome
+					noi += 1
+
+		for i in range(population.shape[0]):
+			population[i].genome = np.copy(newpopulation[i])
+
+		int_list = np.linspace(0, population.shape[0] - 1, population.shape[0], dtype = 'uint8')
+		newlist = np.copy(int_list)
+
+		for i in range(population.shape[0]):
+			newlist[np.random.randint(low = 0, high = population.shape[0])] = int_list[(np.random.randint(low = 0, high = population.shape[0]))]
+
+		for i in range(population.shape[0]):
+			newpopulation[i] = np.copy(population[i].genome)
+
+		for i in range(population.shape[0]):
+			newpopulation[i] = np.copy(population[newlist[i]].genome)
+
+		for i in range(population.shape[0]):
+			population[i].genome  = np.copy(newpopulation[i])
+
+		return
+	
+	
+	def crossover(self):
+		split = np.zeros(int(population.shape[0] / 2), dtype = 'uint8')
+
+		for i in range(int(population.shape[0] / 2)):
+			split[i] = np.random.randint(low = 0, high = population.shape[0] - 1)
+
+		for i in range(int(population.shape[0] / 2)):
+			crossoverrate = np.random.choice([0, 1], 1, p = [0.3, 0.7])
+
+			if crossoverrate[0] == 1:
+				pop1 = np.copy(population[i * 2].genome)
+				pop2 = np.copy(population[i * 2 - 1].genome)
+				for k in range(split[i] + 1, 8):
+					population[i * 2].genome[k] = pop2[k]
+					population[i * 2 - 1].genome[k] = pop1[k]
+
+		return
+
+	def mutation(self):
+		for i in range(population.shape[0]):
+			mutation = np.random.choice(2, 8, p = [0.99, 0.01])
+			for j in range((population[0].genome).shape[0]):
+				if mutation[j] == 1:
+					population[i].genome[j] = np.random.randint(low = 0, high = 7)
+
+	def fitnessfunction(self):
+		fitnessarray = np.zeros(population.shape[0], dtype = 'uint8')
+
+		for k in range(population.shape[0]):
+			for i in range(7):
+				for j in range(i+1, 8):
+					if population[k].genome[i] != population[k].genome[j] and population[k].genome[i] != (population[k].genome[j] + (j-i)) and population[k].genome[i] != (population[k].genome[j] - (j - i)):
+						fitnessarray[k] += 1		
+
+		for i in range(population.shape[0]):
+			population[i].fitness = fitnessarray[i]	
+
+		return
+
+class Individual_EightQueens():
 	def __init__(self):
 		self.fitness = 0
-		# Sequence representation as an OpenCV image object, BGR represent the three different layers 
-		self.genome = np.random.choice([0, 255], size=(height, width, 3)).astype('uint8')
-
-	def update_genome(self, new_genome):
-		self.genome = new_genome
-
-def connected_components(layer): 
-	eq_list = [[],[]] # equivalency list
-	components = np.array
-	n_components = 0 # components found
+		self.genome  = np.random.randint(low = 0, high = 7, size=(8), dtype = 'uint8')
+		self.probability = 0
 			
 
-def fitness_calculation(genome):
-	# The fitness has four weighted parts: uniqueness, coverage, number of channels and unconnected pixels
-	s_unique  = 0 # uniqueness
-	s_cover   = 0 # coverage
-	s_channel = 0 # number of channels
-	s_alone   = 0 # unconnected channels
+# Creating objects
+population = np.array([Individual_EightQueens() for i in range(max_individuals)])
+geneticAlgorithm = GeneticAlgorithm()
 
-	# Unconnected channels: channels that are not connected to the edges receive penalty
+# Fitness array
+fitness_array = np.array([population[i].fitness for i in range(population.shape[0])])
+
+iteration = 0
 
 
-	return w_unique * s_unique + w_cover * s_cover + w_channel * s_channel + w_alone * s_alone
+while iteration < max_iterations:
+	geneticAlgorithm.fitnessfunction()
+	geneticAlgorithm.probabilities()
+	geneticAlgorithm.rouletteWheel()
+	geneticAlgorithm.crossover()
+	geneticAlgorithm.mutation()
 
-# Creating instances
-individuals = [Individual() for i in range(max_individuals)]
+	fitness_array = np.array([population[i].fitness for i in range(population.shape[0])])
 
-print(fitness_calculation(individuals[0].genome))
+	avg = np.mean(fitness_array)
+	maximum = np.max(fitness_array)
 
-# Resizing image to show
-image_to_show = cv2.resize(individuals[0].genome, (0,0), fx = 10, fy = 10)
-cv2.imshow('Touchpad channels', image_to_show)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+	if (28 in fitness_array) == True:
+		print(population[fitness_array.index(28)].genome)
+		break
+
+	print('Iteration: ',iteration, 'Avg fitness:', avg, 'Max fitness: ', maximum)
+
+	iteration += 1
+
+plt.show()
