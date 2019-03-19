@@ -5,6 +5,7 @@ import random
 import matplotlib
 import matplotlib.pyplot as plt
 import time
+import math
 
 np.random.seed(3)
 
@@ -127,13 +128,37 @@ class GeneticAlgorithm:
 		return old_string
 
 	def drawing(self, final_string):
-		image = np.zeros(1000, 1000)
-		position = [0, 500]
+		length = 10.0
+		img = np.zeros((1000,1000), np.uint8)
+		position = (500, 0) # (cols, rows): (0,0) is at top-left
+		heading = math.radians(90) # init heading going directly down
+		turn_left = math.radians(25)
+		turn_right = math.radians(-25)
+		stack = []
 
 		for item in final_string:
 			if item == 'A':
-				
-
+				x_new = int(position[0]+length*math.cos(heading))
+				y_new = int(position[1]+length*math.sin(heading))
+				new_position = ( x_new, y_new )
+				cv2.line(img,position,new_position,255,1)
+				position = new_position
+				print '[ FRWD ] ', length
+			elif item == '+':
+				heading = heading + turn_right
+				print '[ RGHT ] ', math.degrees(turn_right)
+			elif item == '-':
+				heading = heading + turn_left
+				print '[ LEFT ] ', math.degrees(turn_left)
+			elif item == '[':
+				stack.append((position, heading))
+				print '[ APPEND ]', stack
+			elif item == ']':
+				position = stack[len(stack)-1][0]
+				heading =  stack[len(stack)-1][1]
+				print '[ POP  ] ', (position, heading)
+				stack.pop(len(stack)-1)
+				print '[ POP  ] ', stack
 
 class Individual_Lsystem():
 	def __init__(self):
