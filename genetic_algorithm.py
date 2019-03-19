@@ -12,7 +12,11 @@ np.random.seed(3)
 height = 50 # height of the touchpad
 width  = 50 # width of the touchpad
 max_iterations = 100000 # maximum number of iterations
-max_individuals = 200 # number of individuals, need to be even
+max_individuals = 1 # number of individuals, need to be even
+length = 10
+iter_lsystem = 2
+rulearray = ['A', 'B', '+', '-', ']', '[']
+
 
 # Blueprint of individuals
 class GeneticAlgorithm:
@@ -103,41 +107,76 @@ class GeneticAlgorithm:
 
 		return
 
-class Individual_EightQueens():
+	def l_system(self):
+		char_array = list(map(lambda x: rulearray[x], population[i].genome))
+		sep = ''
+		rule = sep.join(char_array)
+		old_string = 'A'
+		for j in range(iter_lsystem):
+			new_string = []
+			for k in range(len(old_string)):
+				if old_string[k] == 'A':
+					new_string.append(rule[0:18])
+				elif old_string[k] == 'B':
+					new_string.append(rule[18:20])
+				else:
+					new_string.append(old_string[k])
+		
+			old_string = sep.join(new_string)
+
+		return old_string
+
+	def drawing(self, final_string):
+		image = np.zeros(1000, 1000)
+		position = [0, 500]
+
+		for item in final_string:
+			if item == 'A':
+				
+
+
+class Individual_Lsystem():
 	def __init__(self):
 		self.fitness = 0
-		self.genome  = np.random.randint(low = 0, high = 7, size=(8), dtype = 'uint8')
+		self.genome = np.random.randint(low = 0, high = 6, size=(20))
 		self.probability = 0
-			
-
+	
 # Creating objects
-population = np.array([Individual_EightQueens() for i in range(max_individuals)])
+population = np.array([Individual_Lsystem() for i in range(max_individuals)])
+
+
 geneticAlgorithm = GeneticAlgorithm()
 
-# Fitness array
-fitness_array = np.array([population[i].fitness for i in range(population.shape[0])])
+print(geneticAlgorithm.l_system())
 
-iteration = 0
+# cv2.imshow('Channels', geneticAlgorithm.l_system())
+# cv2.waitKey(0)
+# cv2.destroyAllWindows()
+
+# # Fitness array
+# fitness_array = np.array([population[i].fitness for i in range(population.shape[0])])
+
+# iteration = 0
 
 
-while iteration < max_iterations:
-	geneticAlgorithm.fitnessfunction()
-	geneticAlgorithm.probabilities()
-	geneticAlgorithm.rouletteWheel()
-	geneticAlgorithm.crossover()
-	geneticAlgorithm.mutation()
+# while iteration < max_iterations:
+# 	geneticAlgorithm.fitnessfunction()
+# 	geneticAlgorithm.probabilities()
+# 	geneticAlgorithm.rouletteWheel()
+# 	geneticAlgorithm.crossover()
+# 	geneticAlgorithm.mutation()
 
-	fitness_array = np.array([population[i].fitness for i in range(population.shape[0])])
+# 	fitness_array = np.array([population[i].fitness for i in range(population.shape[0])])
 
-	avg = np.mean(fitness_array)
-	maximum = np.max(fitness_array)
+# 	avg = np.mean(fitness_array)
+# 	maximum = np.max(fitness_array)
 
-	if (28 in fitness_array) == True:
-		print(population[fitness_array.index(28)].genome)
-		break
+# 	if (28 in fitness_array) == True:
+# 		print(population[fitness_array.index(28)].genome)
+# 		break
 
-	print('Iteration: ',iteration, 'Avg fitness:', avg, 'Max fitness: ', maximum)
+# 	print('Iteration: ',iteration, 'Avg fitness:', avg, 'Max fitness: ', maximum)
 
-	iteration += 1
+# 	iteration += 1
 
-plt.show()
+# plt.show()
