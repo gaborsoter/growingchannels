@@ -6,8 +6,10 @@ import matplotlib
 import matplotlib.pyplot as plt
 import time
 import math
+import sys
 
-np.random.seed(3)
+# np.random.seed(3)
+np.random.seed()
 
 # Hyperparameters
 height = 50 # height of the touchpad
@@ -15,7 +17,6 @@ width  = 50 # width of the touchpad
 max_iterations = 100000 # maximum number of iterations
 max_individuals = 1 # number of individuals, need to be even
 length = 10
-iter_lsystem = 2
 rulearray = ['A', 'B', '+', '-', ']', '[']
 
 
@@ -108,8 +109,13 @@ class GeneticAlgorithm:
 
 		return
 
-	def l_system(self):
+	def l_system(self, iter_lsystem):
 		char_array = list(map(lambda x: rulearray[x], population[i].genome))
+
+		count_bracket_open = 0
+		count_bracket_close = 0
+		
+
 		sep = ''
 		rule = sep.join(char_array)
 		old_string = 'A'
@@ -125,40 +131,54 @@ class GeneticAlgorithm:
 		
 			old_string = sep.join(new_string)
 
+		for item in old_string:
+			if item == ']':
+				count_bracket_close += 1
+			if item == '[':
+				count_bracket_open += 1
+			if count_bracket_close > count_bracket_open:
+				# if at any point POP outnumber APPEND then POP will error
+				print(old_string)
+				print count_bracket_open, count_bracket_close
+				print 'ERROR: CLOSE BRACKET (POP) OUTNUMBER OPEN BRACKETS (APPEND)'
+				sys.exit()
+
 		return old_string
 
 	def drawing(self, final_string):
 		length = 10.0
 		img = np.zeros((1000,1000), np.uint8)
-		position = (500, 0) # (cols, rows): (0,0) is at top-left
+		position = (500, 500) # (cols, rows): (0,0) is at top-left
 		heading = math.radians(90) # init heading going directly down
 		turn_left = math.radians(25)
 		turn_right = math.radians(-25)
 		stack = []
 
 		for item in final_string:
-			if item == 'A':
+			if item == 'A' or item == 'B':
 				x_new = int(position[0]+length*math.cos(heading))
 				y_new = int(position[1]+length*math.sin(heading))
 				new_position = ( x_new, y_new )
 				cv2.line(img,position,new_position,255,1)
 				position = new_position
-				print '[ FRWD ] ', length
+				# print '[ FRWD ] ', position
 			elif item == '+':
 				heading = heading + turn_right
-				print '[ RGHT ] ', math.degrees(turn_right)
+				# print '[ RGHT ] ', math.degrees(turn_right)
 			elif item == '-':
 				heading = heading + turn_left
-				print '[ LEFT ] ', math.degrees(turn_left)
+				# print '[ LEFT ] ', math.degrees(turn_left)
 			elif item == '[':
 				stack.append((position, heading))
-				print '[ APPEND ]', stack
+				# print '[ APPEND ]', stack
 			elif item == ']':
-				position = stack[len(stack)-1][0]
-				heading =  stack[len(stack)-1][1]
-				print '[ POP  ] ', (position, heading)
-				stack.pop(len(stack)-1)
-				print '[ POP  ] ', stack
+				position, heading = stack.pop() #len(stack)-1
+				# print '[ POP  ] ', position, heading
+			else:
+				print '[ NOP  ] ', codebit
+
+		cv2.imshow('Channels', img)
+		cv2.waitKey(0)
 
 class Individual_Lsystem():
 	def __init__(self):
@@ -172,7 +192,9 @@ population = np.array([Individual_Lsystem() for i in range(max_individuals)])
 
 geneticAlgorithm = GeneticAlgorithm()
 
-print(geneticAlgorithm.l_system())
+string_to_draw = geneticAlgorithm.l_system(4)
+# print(string_to_draw)
+geneticAlgorithm.drawing(string_to_draw)
 
 # cv2.imshow('Channels', geneticAlgorithm.l_system())
 # cv2.waitKey(0)
