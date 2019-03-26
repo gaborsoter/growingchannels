@@ -17,6 +17,8 @@ width  = 50 # width of the touchpad
 max_iterations = 1000 # maximum number of iterations
 max_individuals = 1 # number of individuals, need to be even
 length = 10
+weight_c = 1
+weight_u = 0
 rulearray = ['A', 'B', '+', '-', '[', ']']
 
 
@@ -99,16 +101,55 @@ class GeneticAlgorithm:
 	def fitnessfunction(self):
 		fitnessarray = np.zeros(population.shape[0], dtype = 'uint8')
 
-		for k in range(population.shape[0]):
-			for i in range(19):
-				for j in range(i+1, 20):
-					if population[k].genome[i] != population[k].genome[j] and population[k].genome[i] != (population[k].genome[j] + (j-i)) and population[k].genome[i] != (population[k].genome[j] - (j - i)):
-						fitnessarray[k] += 1		
 
-		for i in range(population.shape[0]):
-			population[i].fitness = fitnessarray[i]	
+
+		fitness = weight1 * coverage + weight2 * perf_meas_c() # max fitness = 1, min fitness = 0
+
+
+
+		# for k in range(population.shape[0]):
+		# 	for i in range(19):
+		# 		for j in range(i+1, 20):
+		# 			if population[k].genome[i] != population[k].genome[j] and population[k].genome[i] != (population[k].genome[j] + (j-i)) and population[k].genome[i] != (population[k].genome[j] - (j - i)):
+		# 				fitnessarray[k] += 1		
+
+		# for i in range(population.shape[0]):
+		# 	population[i].fitness = fitnessarray[i]	
 
 		return
+
+	def perf_meas_u(self, image):
+		# kernel_size = 3 # 3 x 3
+		# kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(kernel_size, kernel_size))
+
+		# for i in range(image.shape[0] - (kernel_size - kernel_size % 2)):
+		# 	for j in range(image.shape[0] - (kernel_size - kernel_size % 2)):
+				
+
+
+
+		# fitness_u = 
+		return
+
+	def perf_meas_c(self, image):
+		kernel_size = 3 # 3 x 3
+		kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(kernel_size, kernel_size))
+
+
+		fitness_c = 0
+		for i in range(image.shape[0] - (kernel_size - kernel_size % 2)):
+			for j in range(image.shape[0] - (kernel_size - kernel_size % 2)):	
+				
+				subimage = np.copy(image[i:i+kernel_size][j:j+kernel_size])
+				
+				if cv2.countNonZero(subimage) >= 1:
+					fitness_c += 1
+				# else:
+				# 	fitness_c -= 1
+
+
+
+		return fitness_c / ((kernel_size - kernel_size % 2) ** 2)
 
 	def l_system(self, iter_lsystem):
 
@@ -170,7 +211,6 @@ class Individual_Lsystem():
 	def __init__(self):
 		self.fitness = 0
 		self.genome = np.random.randint(low = 0, high = 6, size=(20))
-		# self.genome = [0, 3, 4, 4, 1, 5, 2, 1, 5, 2, 0, 4, 2, 0, 1, 5, 3, 1, 0, 0] # Existing L-systems rules: A-[[B]+B]+A[+AB]-BAA
 		self.probability = 0
 	
 # Creating objects

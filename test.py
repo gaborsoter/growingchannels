@@ -1,5 +1,3 @@
-import numpy as np
+kernel_size = 3
 
-array = 'robots'
-
-print(array[0:4])
+print((kernel_size - kernel_size % 2))
