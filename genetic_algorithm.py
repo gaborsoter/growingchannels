@@ -17,8 +17,8 @@ width  = 50 # width of the touchpad
 max_iterations = 1000 # maximum number of iterations
 max_individuals = 1 # number of individuals, need to be even
 length = 10
-weight_c = 1
-weight_u = 0
+weight_c = 0.5
+weight_u = 0.5
 rulearray = ['A', 'B', '+', '-', '[', ']']
 
 
@@ -98,14 +98,12 @@ class GeneticAlgorithm:
 				if mutation[j] == 1:
 					population[i].genome[j] = np.random.randint(low = 0, high = 6)
 
-	def fitnessfunction(self):
+	def fitnessfunction(self, covergence, uniqueness):
 		fitnessarray = np.zeros(population.shape[0], dtype = 'uint8')
 
+		fitness = weight_c * covergence + weight_u * uniqueness  # max fitness = 1, min fitness = 0
 
-
-		fitness = weight1 * coverage + weight2 * perf_meas_c() # max fitness = 1, min fitness = 0
-
-
+		print "fitness: ", fitness
 
 		# for k in range(population.shape[0]):
 		# 	for i in range(19):
@@ -119,37 +117,34 @@ class GeneticAlgorithm:
 		return
 
 	def perf_meas_u(self, image):
-		# kernel_size = 3 # 3 x 3
+
+		##############################################################################
+		## VERY SLOW, NEED TO FIND A WAY TO SPEED IT UP
+		##############################################################################
+
+		kernel_size = 3 # 3 x 3
 		# kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(kernel_size, kernel_size))
-
-		# for i in range(image.shape[0] - (kernel_size - kernel_size % 2)):
-		# 	for j in range(image.shape[0] - (kernel_size - kernel_size % 2)):
-				
-
-
-
-		# fitness_u = 
-		return
+		fitness_u = 0
+		kernel = [[1, 3, 1],
+				  [3, 5, 3],
+				  [1, 3, 1]]
+		for i in range(image.shape[0] - (kernel_size - kernel_size % 2)):
+			for j in range(image.shape[0] - (kernel_size - kernel_size % 2)):
+				for x in range(kernel_size):
+					for y in range(kernel_size):
+						fitness_u += image[i+x][j+y] * kernel[x][y]
+		return fitness_u / (21 * 996004.0)
 
 	def perf_meas_c(self, image):
+
 		kernel_size = 3 # 3 x 3
-		kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(kernel_size, kernel_size))
-
-
 		fitness_c = 0
 		for i in range(image.shape[0] - (kernel_size - kernel_size % 2)):
 			for j in range(image.shape[0] - (kernel_size - kernel_size % 2)):	
-				
-				subimage = np.copy(image[i:i+kernel_size][j:j+kernel_size])
-				
+				subimage = image[i:i+kernel_size][j:j+kernel_size]
 				if cv2.countNonZero(subimage) >= 1:
 					fitness_c += 1
-				# else:
-				# 	fitness_c -= 1
-
-
-
-		return fitness_c / ((kernel_size - kernel_size % 2) ** 2)
+		return fitness_c / 996004.0 # ((image.shape[0] - (kernel_size - kernel_size % 2)) **2)
 
 	def l_system(self, iter_lsystem):
 
@@ -185,7 +180,7 @@ class GeneticAlgorithm:
 					x_new = int(position[0]+length*math.cos(heading))
 					y_new = int(position[1]+length*math.sin(heading))
 					new_position = ( x_new, y_new )
-					cv2.line(img,position,new_position,255,1)
+					cv2.line(img,position,new_position,1,1)
 					position = new_position
 					# print '[ FRWD ] ', position
 				elif item == '+':
@@ -204,8 +199,13 @@ class GeneticAlgorithm:
 					print '[ NOP  ] ', codebit
 		except Exception as e:
 			print "Genome not executable"
-		cv2.imshow('Channels', img)
-		cv2.waitKey(5)
+
+		######################################################################################
+		## TO VISUALISE, CHANGE CV2.LINE(IMG,POS,NEWPOS,1,1) T0 CV2.LINE(IMG,POS,NEWPOS,255,1)
+		######################################################################################
+		# cv2.imshow('Channels', img)
+		# cv2.waitKey(5)
+		return img
 
 class Individual_Lsystem():
 	def __init__(self):
@@ -215,17 +215,22 @@ class Individual_Lsystem():
 	
 # Creating objects
 population = np.array([Individual_Lsystem() for i in range(max_individuals)])
-
+previous_string = ''
 iteration = 0
 while iteration < max_iterations:
 	geneticAlgorithm = GeneticAlgorithm()
 	string_to_draw = geneticAlgorithm.l_system(4)
-	geneticAlgorithm.drawing(string_to_draw)
+	img = geneticAlgorithm.drawing(string_to_draw)
+	if string_to_draw != previous_string:
+		covergence = geneticAlgorithm.perf_meas_c(img)
+		uniqueness = geneticAlgorithm.perf_meas_u(img)
+		geneticAlgorithm.fitnessfunction(covergence, uniqueness)
 	geneticAlgorithm.crossover()
 	geneticAlgorithm.mutation()
 
 	print('Iteration: ',iteration)
 	iteration += 1
+	previous_string = string_to_draw
 
 # cv2.imshow('Channels', geneticAlgorithm.l_system())
 # cv2.waitKey(0)
