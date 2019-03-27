@@ -4,7 +4,7 @@ import numpy as np
 import random
 import matplotlib
 import matplotlib.pyplot as plt
-import time
+from time import time
 import math
 import sys
 
@@ -21,6 +21,16 @@ weight_c = 0.5
 weight_u = 0.5
 rulearray = ['A', 'B', '+', '-', '[', ']']
 
+def gkern(l=5, sig=1.):
+	##############################################################################
+	## creates gaussian kernel with side length l and a sigma of sig
+	##############################################################################
+    ax = np.arange(-l // 2 + 1., l // 2 + 1.)
+    xx, yy = np.meshgrid(ax, ax)
+
+    kernel = np.exp(-0.5 * (np.square(xx) + np.square(yy)) / np.square(sig))
+
+    return kernel #/ np.sum(kernel)
 
 # Blueprint of individuals
 class GeneticAlgorithm:
@@ -103,7 +113,7 @@ class GeneticAlgorithm:
 
 		fitness = weight_c * covergence + weight_u * uniqueness  # max fitness = 1, min fitness = 0
 
-		print "fitness: ", fitness
+		print "Fitness:", fitness
 
 		# for k in range(population.shape[0]):
 		# 	for i in range(19):
@@ -118,22 +128,53 @@ class GeneticAlgorithm:
 
 	def perf_meas_u(self, image):
 
+		kernel_size = 3 # 3 x 3
+		fitness_u = 0
+
 		##############################################################################
 		## VERY SLOW, NEED TO FIND A WAY TO SPEED IT UP
+		##
+		## KERNEL TIMES WITH MANUAL LOOPING CALCULATIONS:
+		##	-	cv2.getStructuringElement
+		##		3x3: ~4s
+		##		5x5: ~12s
+		##		7x7: ~22s
+		##
+		##	-	manually made kernel
+		##		3x3: ~14s
+		##		5x5: ~39s
+		##		7x7: ~74s
+		##
+		## dot product functions
+		##	-	sum(sum(np.multiply								~4.6s
+		##	-	np.tensordot 									~10.5s
+		##	-	kernel.ravel().dot(image[i:i+3,j:j+3].ravel())	~1.2s ---flattening arrays before np.dot
+		##	-	np.einsum('ij,ij',kernel,image[i:i+3,j:j+3])	~1.6s
+		##	-	sum(sum(cv2.filter2D(image, cv2.CV_64F, kernel))) ~0.00740694999695s
 		##############################################################################
 
-		kernel_size = 3 # 3 x 3
-		# kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(kernel_size, kernel_size))
-		fitness_u = 0
-		kernel = [[1, 3, 1],
-				  [3, 5, 3],
-				  [1, 3, 1]]
-		for i in range(image.shape[0] - (kernel_size - kernel_size % 2)):
-			for j in range(image.shape[0] - (kernel_size - kernel_size % 2)):
-				for x in range(kernel_size):
-					for y in range(kernel_size):
-						fitness_u += image[i+x][j+y] * kernel[x][y]
-		return fitness_u / (21 * 996004.0)
+		# kernel = [[1, 3, 1],
+		# 		  [3, 5, 3],
+		# 		  [1, 3, 1]]
+		# kernel = [[1, 1, 3, 1, 1],
+		# 		  [1, 1, 3, 1, 1],
+		# 		  [3, 3, 5, 3, 3],
+		# 		  [1, 1, 3, 1, 1],
+		# 		  [1, 1, 3, 1, 1]]
+		# kernel = [[1, 1, 1, 3, 1, 1, 1],
+		# 		  [1, 1, 1, 3, 1, 1, 1],
+		# 		  [1, 1, 1, 3, 1, 1, 1],
+		# 		  [3, 3, 3, 5, 3, 3, 3],
+		# 		  [1, 1, 1, 3, 1, 1, 1],
+		# 		  [1, 1, 1, 3, 1, 1, 1],
+		# 		  [1, 1, 1, 3, 1, 1, 1]]
+
+		# kernel = cv2.getStructuringElement( cv2.MORPH_DILATE,(kernel_size, kernel_size))
+
+		kernel = gkern(kernel_size)
+		fitness_u = sum(sum(cv2.filter2D(image, cv2.CV_64F, kernel)))
+
+		return fitness_u / (sum(sum(kernel)) * 996004.0)
 
 	def perf_meas_c(self, image):
 
@@ -151,7 +192,6 @@ class GeneticAlgorithm:
 		char_array = list(map(lambda x: rulearray[x], population[i].genome))
 		sep = ''
 		rule = sep.join(char_array)
-		print "rules: ", rule
 		old_string = 'B'
 		for j in range(iter_lsystem):
 			new_string = []
@@ -164,7 +204,7 @@ class GeneticAlgorithm:
 					new_string.append(old_string[k])
 			old_string = sep.join(new_string)
 
-		return old_string
+		return rule, old_string
 
 	def drawing(self, final_string):
 		length = 10.0
@@ -173,6 +213,7 @@ class GeneticAlgorithm:
 		heading = math.radians(90) # init heading going directly down
 		turn = math.radians(25)
 		stack = []
+		err = 0
 
 		try:	
 			for item in final_string:
@@ -182,35 +223,33 @@ class GeneticAlgorithm:
 					new_position = ( x_new, y_new )
 					cv2.line(img,position,new_position,1,1)
 					position = new_position
-					# print '[ FRWD ] ', position
 				elif item == '+':
 					heading = heading + turn
-					# print '[ RGHT ] ', math.degrees(turn_right)
 				elif item == '-':
 					heading = heading - turn
-					# print '[ LEFT ] ', math.degrees(turn_left)
 				elif item == '[':
 					stack.append((position, heading))
-					# print '[ APPEND ]', stack
 				elif item == ']':
-					position, heading = stack.pop() #len(stack)-1
-					# print '[ POP  ] ', position, heading
+					position, heading = stack.pop()
 				else:
-					print '[ NOP  ] ', codebit
+					print ''
 		except Exception as e:
-			print "Genome not executable"
+			# print "Genome not executable"
+			err = 1
 
 		######################################################################################
 		## TO VISUALISE, CHANGE CV2.LINE(IMG,POS,NEWPOS,1,1) T0 CV2.LINE(IMG,POS,NEWPOS,255,1)
 		######################################################################################
 		# cv2.imshow('Channels', img)
 		# cv2.waitKey(5)
-		return img
+		return img, err
+
 
 class Individual_Lsystem():
 	def __init__(self):
 		self.fitness = 0
-		self.genome = np.random.randint(low = 0, high = 6, size=(20))
+		# self.genome = np.random.randint(low = 0, high = 6, size=(20))
+		self.genome = [0, 3, 4, 4, 1, 5, 2, 1, 5, 2, 0, 4, 2, 0, 1, 5, 3, 1, 0, 0] # Existing L-systems rules: A-[[B]+B]+A[+AB]-BAA
 		self.probability = 0
 	
 # Creating objects
@@ -219,16 +258,17 @@ previous_string = ''
 iteration = 0
 while iteration < max_iterations:
 	geneticAlgorithm = GeneticAlgorithm()
-	string_to_draw = geneticAlgorithm.l_system(4)
-	img = geneticAlgorithm.drawing(string_to_draw)
-	if string_to_draw != previous_string:
+	rls, string_to_draw = geneticAlgorithm.l_system(4)
+	img, err = geneticAlgorithm.drawing(string_to_draw)
+	if string_to_draw != previous_string and err == 0:
+		print '-- Iteration',iteration,'--'
+		print 'Rules:', rls
 		covergence = geneticAlgorithm.perf_meas_c(img)
 		uniqueness = geneticAlgorithm.perf_meas_u(img)
 		geneticAlgorithm.fitnessfunction(covergence, uniqueness)
 	geneticAlgorithm.crossover()
 	geneticAlgorithm.mutation()
 
-	print('Iteration: ',iteration)
 	iteration += 1
 	previous_string = string_to_draw
 

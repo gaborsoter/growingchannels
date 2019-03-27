@@ -2,6 +2,27 @@ import cv2
 import numpy as np
 import math
 import sys
+import numpy as np
+
+
+def gkern(l=5, sig=1.):
+    """
+    creates gaussian kernel with side length l and a sigma of sig
+    """
+
+    ax = np.arange(-l // 2 + 1., l // 2 + 1.)
+    xx, yy = np.meshgrid(ax, ax)
+    print xx,yy
+
+    kernel = np.exp(-0.5 * (np.square(xx) + np.square(yy)) / np.square(sig))
+    print sum(sum(kernel))* 996004.0
+
+    return kernel #/ np.sum(kernel)
+
+print gkern(3)
+
+sys.exit()
+
 
 # final_string = 'A+A[-A+]+A'
 
