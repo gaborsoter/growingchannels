@@ -15,7 +15,7 @@ np.random.seed()
 height = 50 # height of the touchpad
 width  = 50 # width of the touchpad
 max_iterations = 1000 # maximum number of iterations
-max_individuals = 1 # number of individuals, need to be even
+max_individuals = 10 # number of individuals, need to be even
 length = 10
 weight_c = 0.5
 weight_u = 0.5
@@ -113,7 +113,7 @@ class GeneticAlgorithm:
 
 		fitness = weight_c * covergence + weight_u * uniqueness  # max fitness = 1, min fitness = 0
 
-		print "Fitness:", fitness
+		# print "Fitness:", fitness
 
 		# for k in range(population.shape[0]):
 		# 	for i in range(19):
@@ -124,53 +124,15 @@ class GeneticAlgorithm:
 		# for i in range(population.shape[0]):
 		# 	population[i].fitness = fitnessarray[i]	
 
-		return
+		return fitness
 
 	def perf_meas_u(self, image):
 
 		kernel_size = 3 # 3 x 3
 		fitness_u = 0
-
-		##############################################################################
-		## VERY SLOW, NEED TO FIND A WAY TO SPEED IT UP
-		##
-		## KERNEL TIMES WITH MANUAL LOOPING CALCULATIONS:
-		##	-	cv2.getStructuringElement
-		##		3x3: ~4s
-		##		5x5: ~12s
-		##		7x7: ~22s
-		##
-		##	-	manually made kernel
-		##		3x3: ~14s
-		##		5x5: ~39s
-		##		7x7: ~74s
-		##
-		## dot product functions
-		##	-	sum(sum(np.multiply								~4.6s
-		##	-	np.tensordot 									~10.5s
-		##	-	kernel.ravel().dot(image[i:i+3,j:j+3].ravel())	~1.2s ---flattening arrays before np.dot
-		##	-	np.einsum('ij,ij',kernel,image[i:i+3,j:j+3])	~1.6s
-		##	-	sum(sum(cv2.filter2D(image, cv2.CV_64F, kernel))) ~0.00740694999695s
-		##############################################################################
-
 		# kernel = [[1, 3, 1],
 		# 		  [3, 5, 3],
 		# 		  [1, 3, 1]]
-		# kernel = [[1, 1, 3, 1, 1],
-		# 		  [1, 1, 3, 1, 1],
-		# 		  [3, 3, 5, 3, 3],
-		# 		  [1, 1, 3, 1, 1],
-		# 		  [1, 1, 3, 1, 1]]
-		# kernel = [[1, 1, 1, 3, 1, 1, 1],
-		# 		  [1, 1, 1, 3, 1, 1, 1],
-		# 		  [1, 1, 1, 3, 1, 1, 1],
-		# 		  [3, 3, 3, 5, 3, 3, 3],
-		# 		  [1, 1, 1, 3, 1, 1, 1],
-		# 		  [1, 1, 1, 3, 1, 1, 1],
-		# 		  [1, 1, 1, 3, 1, 1, 1]]
-
-		# kernel = cv2.getStructuringElement( cv2.MORPH_DILATE,(kernel_size, kernel_size))
-
 		kernel = gkern(kernel_size)
 		fitness_u = sum(sum(cv2.filter2D(image, cv2.CV_64F, kernel)))
 
@@ -189,22 +151,26 @@ class GeneticAlgorithm:
 
 	def l_system(self, iter_lsystem):
 
-		char_array = list(map(lambda x: rulearray[x], population[i].genome))
+		char_array = np.array([list(map(lambda x: rulearray[x], population[i].genome)) for i in range(max_individuals)])
+		# char_array = list(map(lambda x: rulearray[x], population[i].genome))
 		sep = ''
-		rule = sep.join(char_array)
-		old_string = 'B'
-		for j in range(iter_lsystem):
-			new_string = []
-			for k in range(len(old_string)):
-				if old_string[k] == 'B':
-					new_string.append(rule[0:18])
-				elif old_string[k] == 'A':
-					new_string.append(rule[18:20])
-				else:
-					new_string.append(old_string[k])
-			old_string = sep.join(new_string)
+		strings_to_draw = []#np.array(["" for i in range(max_individuals)])
+		rules = np.array([sep.join(char_array[i]) for i in range(max_individuals)])
+		for genes in range(max_individuals):
+			old_string = 'B'
+			for j in range(iter_lsystem):
+				new_string = []
+				for k in range(len(old_string)):
+					if old_string[k] == 'B':
+						new_string.append(rules[i][0:18])
+					elif old_string[k] == 'A':
+						new_string.append(rules[i][18:20])
+					else:
+						new_string.append(old_string[k])
+				old_string = sep.join(new_string)
+			strings_to_draw.append(old_string)
 
-		return rule, old_string
+		return rules, strings_to_draw
 
 	def drawing(self, final_string):
 		length = 10.0
@@ -215,13 +181,14 @@ class GeneticAlgorithm:
 		stack = []
 		err = 0
 
-		try:	
+		try:
 			for item in final_string:
 				if item == 'A' or item == 'B':
 					x_new = int(position[0]+length*math.cos(heading))
 					y_new = int(position[1]+length*math.sin(heading))
 					new_position = ( x_new, y_new )
 					cv2.line(img,position,new_position,1,1)
+					# cv2.line(img,position,new_position,255,1)
 					position = new_position
 				elif item == '+':
 					heading = heading + turn
@@ -232,7 +199,7 @@ class GeneticAlgorithm:
 				elif item == ']':
 					position, heading = stack.pop()
 				else:
-					print ''
+					print 'Non'
 		except Exception as e:
 			# print "Genome not executable"
 			err = 1
@@ -248,29 +215,42 @@ class GeneticAlgorithm:
 class Individual_Lsystem():
 	def __init__(self):
 		self.fitness = 0
-		# self.genome = np.random.randint(low = 0, high = 6, size=(20))
-		self.genome = [0, 3, 4, 4, 1, 5, 2, 1, 5, 2, 0, 4, 2, 0, 1, 5, 3, 1, 0, 0] # Existing L-systems rules: A-[[B]+B]+A[+AB]-BAA
+		self.genome = np.random.randint(low = 0, high = 6, size=(20))
+		# self.genome = [0, 3, 4, 4, 1, 5, 2, 1, 5, 2, 0, 4, 2, 0, 1, 5, 3, 1, 0, 0] # Existing L-systems rules: A-[[B]+B]+A[+AB]-BAA
 		self.probability = 0
 	
 # Creating objects
 population = np.array([Individual_Lsystem() for i in range(max_individuals)])
+# print population[0].genome
+
+fitnessarray = []
 previous_string = ''
 iteration = 0
+geneticAlgorithm = GeneticAlgorithm()
+
 while iteration < max_iterations:
-	geneticAlgorithm = GeneticAlgorithm()
-	rls, string_to_draw = geneticAlgorithm.l_system(4)
-	img, err = geneticAlgorithm.drawing(string_to_draw)
-	if string_to_draw != previous_string and err == 0:
-		print '-- Iteration',iteration,'--'
-		print 'Rules:', rls
-		covergence = geneticAlgorithm.perf_meas_c(img)
-		uniqueness = geneticAlgorithm.perf_meas_u(img)
-		geneticAlgorithm.fitnessfunction(covergence, uniqueness)
+	
+	# print '-- Iteration',iteration,'--'
+	
+	genes, strings_to_draw = geneticAlgorithm.l_system(4)
+
+	for item in range(max_individuals):
+		img, err = geneticAlgorithm.drawing(strings_to_draw[item])
+		if strings_to_draw[item] != previous_string and err == 0:
+			# print 'Rules:', genes[item]
+			covergence = geneticAlgorithm.perf_meas_c(img)
+			uniqueness = geneticAlgorithm.perf_meas_u(img)
+			fitness = geneticAlgorithm.fitnessfunction(covergence, uniqueness)
+		else:
+			fitness = 0.0
+		fitnessarray.append([genes[item], fitness])
+		print 'iteration', iteration, 'fitnessarray', fitnessarray[item]
+	sys.exit()
 	geneticAlgorithm.crossover()
 	geneticAlgorithm.mutation()
+	previous_string = strings_to_draw
 
 	iteration += 1
-	previous_string = string_to_draw
 
 # cv2.imshow('Channels', geneticAlgorithm.l_system())
 # cv2.waitKey(0)
