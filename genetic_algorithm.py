@@ -14,8 +14,8 @@ np.random.seed()
 # Hyperparameters
 height = 50 # height of the touchpad
 width  = 50 # width of the touchpad
-max_iterations = 1000 # maximum number of iterations
-max_individuals = 10 # number of individuals, need to be even
+max_iterations = 100 # maximum number of iterations
+max_individuals = 20 # number of individuals, need to be even
 length = 10
 weight_c = 0.5
 weight_u = 0.5
@@ -44,7 +44,10 @@ class GeneticAlgorithm:
 			fitsum = fitsum + population[i].fitness
 
 		for i in range(population.shape[0]):
-			population[i].probability = population[i].fitness / fitsum		
+			    try:
+					population[i].probability = population[i].fitness / fitsum
+			    except ZeroDivisionError:
+			    	population[i].probability = 0.0
 
 		return
 
@@ -81,7 +84,6 @@ class GeneticAlgorithm:
 
 		return
 	
-	
 	def crossover(self):
 		split = np.zeros(int(population.shape[0] / 2), dtype = 'uint8')
 
@@ -108,45 +110,40 @@ class GeneticAlgorithm:
 				if mutation[j] == 1:
 					population[i].genome[j] = np.random.randint(low = 0, high = 6)
 
-	def fitnessfunction(self, covergence, uniqueness):
-		fitnessarray = np.zeros(population.shape[0], dtype = 'uint8')
+	def fitnessfunction(self, covergences, uniquenesses):
 
-		fitness = weight_c * covergence + weight_u * uniqueness  # max fitness = 1, min fitness = 0
+		for i in range(covergences.shape[0]):
+			population[i].fitness = weight_c * covergences[i] + weight_u * uniquenesses[i]  # max fitness = 1, min fitness = 0
 
-		# print "Fitness:", fitness
+		return
 
-		# for k in range(population.shape[0]):
-		# 	for i in range(19):
-		# 		for j in range(i+1, 20):
-		# 			if population[k].genome[i] != population[k].genome[j] and population[k].genome[i] != (population[k].genome[j] + (j-i)) and population[k].genome[i] != (population[k].genome[j] - (j - i)):
-		# 				fitnessarray[k] += 1		
-
-		# for i in range(population.shape[0]):
-		# 	population[i].fitness = fitnessarray[i]	
-
-		return fitness
-
-	def perf_meas_u(self, image):
-
-		kernel_size = 3 # 3 x 3
-		fitness_u = 0
-		# kernel = [[1, 3, 1],
-		# 		  [3, 5, 3],
-		# 		  [1, 3, 1]]
+	def perf_meas_u(self, images):
+		
+		kernel_size =51 # 3 x 3
 		kernel = gkern(kernel_size)
-		fitness_u = sum(sum(cv2.filter2D(image, cv2.CV_64F, kernel)))
+		fitness_u = np.zeros(population.shape[0])
+		index = 0
+		
+		for image in images:
+			fitness_u[index] = sum(sum(cv2.filter2D(image, cv2.CV_64F, kernel)))
+			index += 1
 
 		return fitness_u / (sum(sum(kernel)) * 996004.0)
 
-	def perf_meas_c(self, image):
+	def perf_meas_c(self, images):
 
-		kernel_size = 3 # 3 x 3
-		fitness_c = 0
-		for i in range(image.shape[0] - (kernel_size - kernel_size % 2)):
-			for j in range(image.shape[0] - (kernel_size - kernel_size % 2)):	
-				subimage = image[i:i+kernel_size][j:j+kernel_size]
-				if cv2.countNonZero(subimage) >= 1:
-					fitness_c += 1
+		kernel_size = 51 # 3 x 3
+		fitness_c = np.zeros(population.shape[0])
+		index = 0
+
+		for image in images:
+			for i in range(image.shape[0] - (kernel_size - kernel_size % 2)):
+				for j in range(image.shape[0] - (kernel_size - kernel_size % 2)):	
+					subimage = image[i:i+kernel_size][j:j+kernel_size]
+					if cv2.countNonZero(subimage) >= 1:
+						fitness_c[index] += 1
+			index += 1
+
 		return fitness_c / 996004.0 # ((image.shape[0] - (kernel_size - kernel_size % 2)) **2)
 
 	def l_system(self, iter_lsystem):
@@ -162,9 +159,9 @@ class GeneticAlgorithm:
 				new_string = []
 				for k in range(len(old_string)):
 					if old_string[k] == 'B':
-						new_string.append(rules[i][0:18])
+						new_string.append(rules[genes][0:18])
 					elif old_string[k] == 'A':
-						new_string.append(rules[i][18:20])
+						new_string.append(rules[genes][18:20])
 					else:
 						new_string.append(old_string[k])
 				old_string = sep.join(new_string)
@@ -172,44 +169,49 @@ class GeneticAlgorithm:
 
 		return rules, strings_to_draw
 
-	def drawing(self, final_string):
+	def drawing(self, expanded_strings):
 		length = 10.0
-		img = np.zeros((1000,1000), np.uint8)
-		position = (500, 500) # (cols, rows): (0,0) is at top-left
-		heading = math.radians(90) # init heading going directly down
-		turn = math.radians(25)
-		stack = []
-		err = 0
+		imgs =[]
+		imgs_show = []
+		errs = []
 
-		try:
-			for item in final_string:
-				if item == 'A' or item == 'B':
-					x_new = int(position[0]+length*math.cos(heading))
-					y_new = int(position[1]+length*math.sin(heading))
-					new_position = ( x_new, y_new )
-					cv2.line(img,position,new_position,1,1)
-					# cv2.line(img,position,new_position,255,1)
-					position = new_position
-				elif item == '+':
-					heading = heading + turn
-				elif item == '-':
-					heading = heading - turn
-				elif item == '[':
-					stack.append((position, heading))
-				elif item == ']':
-					position, heading = stack.pop()
-				else:
-					print 'Non'
-		except Exception as e:
-			# print "Genome not executable"
-			err = 1
+		for each_string in expanded_strings:
+			img = np.zeros((1000,1000), np.uint8)
+			img_show = np.zeros((1000,1000), np.uint8)
+			position = (500, 500) # (cols, rows): (0,0) is at top-left
+			heading = math.radians(90) # init heading going directly down
+			turn = math.radians(25)
+			stack = []
+			err = 0
 
-		######################################################################################
-		## TO VISUALISE, CHANGE CV2.LINE(IMG,POS,NEWPOS,1,1) T0 CV2.LINE(IMG,POS,NEWPOS,255,1)
-		######################################################################################
-		# cv2.imshow('Channels', img)
-		# cv2.waitKey(5)
-		return img, err
+			try:
+				for char in each_string:
+					if char == 'A' or char == 'B':
+						x_new = int(position[0]+length*math.cos(heading))
+						y_new = int(position[1]+length*math.sin(heading))
+						new_position = ( x_new, y_new )
+						cv2.line(img,position,new_position,1,1)
+						cv2.line(img_show,position,new_position,255,1)
+						position = new_position
+					elif char == '+':
+						heading = heading + turn
+					elif char == '-':
+						heading = heading - turn
+					elif char == '[':
+						stack.append((position, heading))
+					elif char == ']':
+						position, heading = stack.pop()
+					else:
+						print 'Non'
+			except Exception as e:
+				# print "Genome not executable"
+				err = 1
+			
+			imgs.append(img)
+			imgs_show.append(img_show)
+			errs.append(err)
+		
+		return imgs, imgs_show, errs
 
 
 class Individual_Lsystem():
@@ -218,68 +220,43 @@ class Individual_Lsystem():
 		self.genome = np.random.randint(low = 0, high = 6, size=(20))
 		# self.genome = [0, 3, 4, 4, 1, 5, 2, 1, 5, 2, 0, 4, 2, 0, 1, 5, 3, 1, 0, 0] # Existing L-systems rules: A-[[B]+B]+A[+AB]-BAA
 		self.probability = 0
-	
-# Creating objects
-population = np.array([Individual_Lsystem() for i in range(max_individuals)])
-# print population[0].genome
 
-fitnessarray = []
-previous_string = ''
+
+#####################################################################################################
+## MAIN
+#####################################################################################################
+population = np.array([Individual_Lsystem() for i in range(max_individuals)])
+
 iteration = 0
 geneticAlgorithm = GeneticAlgorithm()
 
 while iteration < max_iterations:
 	
-	# print '-- Iteration',iteration,'--'
-	
 	genes, strings_to_draw = geneticAlgorithm.l_system(4)
+	imgs,imgs_show, errs = geneticAlgorithm.drawing(strings_to_draw)
+	uniqueness = geneticAlgorithm.perf_meas_u(imgs)
+	covergence = geneticAlgorithm.perf_meas_c(imgs)
+	geneticAlgorithm.fitnessfunction(covergence, uniqueness)
 
+	'''
+	show images and print genomes and fitnesses
+	'''
 	for item in range(max_individuals):
-		img, err = geneticAlgorithm.drawing(strings_to_draw[item])
-		if strings_to_draw[item] != previous_string and err == 0:
-			# print 'Rules:', genes[item]
-			covergence = geneticAlgorithm.perf_meas_c(img)
-			uniqueness = geneticAlgorithm.perf_meas_u(img)
-			fitness = geneticAlgorithm.fitnessfunction(covergence, uniqueness)
-		else:
-			fitness = 0.0
-		fitnessarray.append([genes[item], fitness])
-		print 'iteration', iteration, 'fitnessarray', fitnessarray[item]
-	sys.exit()
+		cv2.imshow('Channels', imgs_show[item])
+		cv2.waitKey(250)
+		print 'iteration', iteration, 'gene', item+1, '/', max_individuals, 'rules', genes[item], 'fitness', population[item].fitness #, 'err', errs[item]
+
+	'''
+	print average and max fitness
+	'''
+	fitnessarray = np.array([population[i].fitness for i in range(population.shape[0])])
+	print 'Iteration: ',iteration, 'Avg fitness:', np.mean(fitnessarray), 'Max fitness: ', np.max(fitnessarray)
+
+	geneticAlgorithm.probabilities()
+	geneticAlgorithm.rouletteWheel()
 	geneticAlgorithm.crossover()
 	geneticAlgorithm.mutation()
-	previous_string = strings_to_draw
 
 	iteration += 1
 
-# cv2.imshow('Channels', geneticAlgorithm.l_system())
-# cv2.waitKey(0)
-# cv2.destroyAllWindows()
-
-# # Fitness array
-# fitness_array = np.array([population[i].fitness for i in range(population.shape[0])])
-
-# iteration = 0
-
-
-# while iteration < max_iterations:
-# 	geneticAlgorithm.fitnessfunction()
-# 	geneticAlgorithm.probabilities()
-# 	geneticAlgorithm.rouletteWheel()
-# 	geneticAlgorithm.crossover()
-# 	geneticAlgorithm.mutation()
-
-# 	fitness_array = np.array([population[i].fitness for i in range(population.shape[0])])
-
-# 	avg = np.mean(fitness_array)
-# 	maximum = np.max(fitness_array)
-
-# 	if (28 in fitness_array) == True:
-# 		print(population[fitness_array.index(28)].genome)
-# 		break
-
-# 	print('Iteration: ',iteration, 'Avg fitness:', avg, 'Max fitness: ', maximum)
-
-# 	iteration += 1
-
-# plt.show()
+cv2.destroyAllWindows()
