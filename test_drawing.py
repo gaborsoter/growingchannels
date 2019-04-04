@@ -5,24 +5,6 @@ import sys
 import numpy as np
 
 
-def gkern(l=5, sig=1.):
-    """
-    creates gaussian kernel with side length l and a sigma of sig
-    """
-
-    ax = np.arange(-l // 2 + 1., l // 2 + 1.)
-    xx, yy = np.meshgrid(ax, ax)
-    print xx,yy
-
-    kernel = np.exp(-0.5 * (np.square(xx) + np.square(yy)) / np.square(sig))
-    print sum(sum(kernel))* 996004.0
-
-    return kernel #/ np.sum(kernel)
-
-print gkern(3)
-
-sys.exit()
-
 
 # final_string = 'A+A[-A+]+A'
 
@@ -36,6 +18,7 @@ iter_lsystem = 4
 # gene = [0, 3, 4, 4, 1, 5, 2, 1, 5, 2, 0, 4, 2, 0, 1, 5, 3, 1, 0, 0]
 #       A  -  [  [  B  ]  +  B  ]  +  B  [  +  A  B  ]  -  B  +  A
 gene = [0, 3, 4, 4, 1, 5, 2, 1, 5, 2, 1, 4, 2, 0, 1, 5, 3, 1, 2, 0]
+
 char_array = list(map(lambda x: rulearray[x], gene))
 #################################################################
 # char_array = list(map(lambda x: rulearray[x], population[i].genome))
@@ -45,6 +28,9 @@ count_bracket_close = 0
 
 sep = ''
 rule = sep.join(char_array)
+
+rule = '-+B[[+BAABB+B-ABB]A-'
+turn = math.radians(45)
 # rule = '[][A--B]A+B+[]][B[[+'
 old_string = 'B'
 for j in range(iter_lsystem):
@@ -76,10 +62,10 @@ for item in old_string:
 # final_string = 'BBBBBBBBBBBBBBBB-[[BBBBBBBB-[[BBBB-[[BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]+BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]+BBBB[+BBBBBB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]-BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]+BBBB-[[BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]+BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]+BBBB[+BBBBBB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]-BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]+BBBBBBBB[+BBBBBBBBBBBB-[[BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]+BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]+BBBB[+BBBBBB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]-BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]-BBBB-[[BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]+BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]+BBBB[+BBBBBB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]-BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]+BBBBBBBB-[[BBBB-[[BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]+BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]+BBBB[+BBBBBB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]-BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]+BBBB-[[BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]+BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]+BBBB[+BBBBBB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]-BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]+BBBBBBBB[+BBBBBBBBBBBB-[[BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]+BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]+BBBB[+BBBBBB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]-BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]-BBBB-[[BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]+BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]+BBBB[+BBBBBB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]-BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]+BBBBBBBBBBBBBBBB[+BBBBBBBBBBBBBBBBBBBBBBBB-[[BBBB-[[BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]+BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]+BBBB[+BBBBBB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]-BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]+BBBB-[[BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]+BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]+BBBB[+BBBBBB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]-BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]+BBBBBBBB[+BBBBBBBBBBBB-[[BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]+BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]+BBBB[+BBBBBB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]-BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]-BBBB-[[BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]+BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]+BBBB[+BBBBBB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]-BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]-BBBBBBBB-[[BBBB-[[BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]+BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]+BBBB[+BBBBBB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]-BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]+BBBB-[[BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]+BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]+BBBB[+BBBBBB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]-BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]+BBBBBBBB[+BBBBBBBBBBBB-[[BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]+BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]+BBBB[+BBBBBB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]-BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]-BBBB-[[BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]+BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]+BBBB[+BBBBBB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A]-BB-[[B-[[A]+A]+B[+BA]-A]+B-[[A]+A]+B[+BA]-A]+BB[+BBB-[[A]+A]+B[+BA]-A]-B-[[A]+A]+B[+BA]-A'
 final_string = old_string
 length = 10.0
-img = np.zeros((1000,1000), np.uint8)
+img = np.zeros((1500,1500), np.uint8)
 position = (500, 500) # (cols, rows): (0,0) is at top-left
 heading = math.radians(90) # init heading going directly down
-turn = math.radians(25)
+# turn = math.radians(25)
 stack = []
 
 for item in final_string:
