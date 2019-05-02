@@ -1,3 +1,5 @@
-kernel_size = 3
+import sys
 
-print((kernel_size - kernel_size % 2))
+
+if (sys.version_info > (3, 0)):
+	print(2)

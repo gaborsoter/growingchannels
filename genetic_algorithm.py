@@ -1,4 +1,5 @@
 # This file includes the algorithm for two-dimensional optimisation of the channels of a soft touchpad. 
+from __future__ import print_function
 import cv2 
 import numpy as np
 import random
@@ -8,6 +9,7 @@ from time import time
 import math
 import sys
 from sklearn import preprocessing
+
 
 # np.random.seed(3)
 np.random.seed()
@@ -25,25 +27,21 @@ kernel_size = 101
 division = (1000 - kernel_size)**2
 
 def gkern(l=5, sig=1.):
-	'''
-	creates gaussian kernel with side length l and a sigma of sig
-	'''
+	
+	# creates gaussian kernel with side length l and a sigma of sig
+	
 	ax = np.arange(-l // 2 + 1., l // 2 + 1.)
 	xx, yy = np.meshgrid(ax, ax)
 
 	kernel = np.exp(-0.5 * (np.square(xx) + np.square(yy)) / np.square(sig))
 
-	return kernel #/ np.sum(kernel)
+	return kernel
 
 class GeneticAlgorithm:
 	def __init__(self):
 		self.fitness = 0
 		self.genome = np.random.randint(low = 0, high = 6, size=(20))
 		self.angle = np.random.randint(low = 0, high = 90, size=(1))
-		# self.rules = np.random.randint(low = 0, high = 6, size=(20))
-		# self.angle = np.random.randint(low = 0, high = 90, size=(1))
-		# self.genome = np.concatenate((self.rules, self.angle), axis=None)
-		# self.genome = [0, 3, 4, 4, 1, 5, 2, 1, 5, 2, 0, 4, 2, 0, 1, 5, 3, 1, 0, 0] # Existing L-systems rules: A-[[B]+B]+A[+AB]-BAA
 		self.probability = 0
 	
 	def probabilities(self):
@@ -68,7 +66,7 @@ class GeneticAlgorithm:
 		while noi < (population.shape[0]):
 			# rp = np.random.rand() / population.shape[0] / 10
 			rp = np.random.rand() / population.shape[0]
-			print 'rp',rp
+			print('rp',rp)
 
 			for i in range(population.shape[0]):
 				if noi < (population.shape[0]) and rp <= population[i].probability:
@@ -233,7 +231,7 @@ class L_Systems():
 					elif char == ']':
 						position, heading = stack.pop()
 					else:
-						print 'Non'
+						print('Non')
 			except Exception as e:
 				# print "Genome not executable"
 				err = 1
@@ -271,19 +269,19 @@ while iteration < max_iterations:
 	for item in range(max_individuals):
 		cv2.imshow('Channels', imgs_show[item])
 		cv2.waitKey(250)
-		print 'iteration', iteration, 'gene', item+1, '/', max_individuals, 'rules', rules[item], 'angle', population[item].angle, 'fitness', population[item].fitness #, 'err', errs[item]
+		print('iteration', iteration, 'gene', item+1, '/', max_individuals, 'rules', rules[item], 'angle', population[item].angle, 'fitness', population[item].fitness) #, 'err', errs[item]
 		if population[item].fitness > globalmaxfitness:
 			globalmaxfitness = population[item].fitness
 			globalmaxfitnessangle = population[item].angle
 			globalmaxfitnessrule = rules[item]
-	print '###################################################################'
-	print 'globalmaxfitness: rule', globalmaxfitnessrule, 'angle', globalmaxfitnessangle, 'fitness', globalmaxfitness
-	print '###################################################################'
+	print('###################################################################')
+	print('globalmaxfitness: rule', globalmaxfitnessrule, 'angle', globalmaxfitnessangle, 'fitness', globalmaxfitness)
+	print('###################################################################')
 	'''
 	print average and max fitness
 	'''
 	fitnessarray = np.array([population[i].fitness for i in range(population.shape[0])])
-	print 'Iteration: ',iteration, 'Avg fitness:', np.mean(fitnessarray), 'Max fitness: ', np.max(fitnessarray)
+	print('Iteration: ',iteration, 'Avg fitness:', np.mean(fitnessarray), 'Max fitness: ', np.max(fitnessarray))
 
 	geneticAlgorithm.probabilities()
 	geneticAlgorithm.rouletteWheel()
@@ -292,5 +290,6 @@ while iteration < max_iterations:
 
 	iteration += 1
 
-
 cv2.destroyAllWindows()
+
+
